@@ -215,12 +215,15 @@ class PeerNode:
         :type port: int
         :rtype: None
         """
-        peer_id = host + ':' + str(port)
-        self.peer_lock.acquire()
-        self.peers[peer_id] = {
-            'alive': True
-        }
-        self.peer_lock.release()
+        if not self.max_peers_reached():
+            peer_id = host + ':' + str(port)
+            self.peer_lock.acquire()
+            self.peers[peer_id] = {
+                'alive': True
+            }
+            self.peer_lock.release()
+        else:
+            self.__debug("Can't add new peer : max reached.")
 
     def remove_peer(self, host, port):
         """
