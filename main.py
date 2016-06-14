@@ -15,10 +15,11 @@ if __name__ == '__main__':
     port_range = range(4567, 4580)
 
     for port_number in port_range:
-        peer = PeerNode(50, port_number)
+        peer = PeerNode(20, port_number)
         peers.append(peer)
+        print('Creating peer ', port_number)
 
-        for peer_port in port_range:
+        for peer_port in range(4567, 4572):
             if peer_port != port_number:
                 peer.add_peer(ip, peer_port)
 

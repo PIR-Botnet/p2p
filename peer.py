@@ -96,6 +96,11 @@ class PeerNode:
 
         self.add_handler('PING', self.ping_handler)
         self.add_handler('ALIVE', self.alive_handler)
+        self.add_handler('HELLO', self.hello_handler)
+        self.add_handler('PEERS', self.peers_handler)
+
+        hello = Message(1, 'HELLO', [self.server_host, self.server_port])
+        self.broadcast_message(hello)
 
         self.start_stabilizer(self.check_live_peers, random.randint(3, 10))
 
@@ -142,7 +147,8 @@ class PeerNode:
             else:
                 self.__debug('Handling peer msg: {0}'.format(str(message)))
                 self.handlers[message.order](message)
-                if not (message.order == 'PING' or message.order == 'ALIVE'):
+                message.ttl -= 1
+                if message.ttl > 0:
                     self.broadcast_message(message)
 
         except KeyboardInterrupt:
@@ -216,6 +222,7 @@ class PeerNode:
         :rtype: None
         """
         if not self.max_peers_reached():
+            self.__debug('Adding peer ' + str(port))
             peer_id = host + ':' + str(port)
             self.peer_lock.acquire()
             self.peers[peer_id] = {
@@ -257,7 +264,7 @@ class PeerNode:
         :return: Maximum of peers reached ?
         :rtype: bool
         """
-        return len(self.peers) < self.max_peers
+        return len(self.peers) >= self.max_peers
 
     def check_live_peers(self):
         """
@@ -283,7 +290,7 @@ class PeerNode:
         finally:
             self.peer_lock.release()
 
-        m = Message(10, 'PING', [self.server_host, self.server_port])
+        m = Message(1, 'PING', [self.server_host, self.server_port])
         self.broadcast_message(m)
 
     def ping_handler(self, message):
@@ -297,8 +304,7 @@ class PeerNode:
         """
         dst_host = message.data[0]
         dst_port = message.data[1]
-        self.__debug('Received ' + str(message))
-        m = Message(10, 'ALIVE', [self.server_host, self.server_port])
+        m = Message(1, 'ALIVE', [self.server_host, self.server_port])
         send_message(m, dst_host, dst_port)
 
     def alive_handler(self, message):
@@ -312,6 +318,34 @@ class PeerNode:
         """
         alive_host = message.data[0]
         alive_port = message.data[1]
-        self.__debug('Received ' + str(message))
-        peer_id = alive_host + ':' + str(alive_port)
+        peer_id = alive_host + ':' + alive_port
         self.peers[peer_id]['alive'] = True
+
+    def hello_handler(self, message):
+        """
+        Handles a HELLO message.
+
+        Adds the peer to the peer list if enough room.
+        Sends it back our peer list.
+        :param message: The received message.
+        :type message: Message
+        :rtype: None
+        """
+        new_host = message.data[0]
+        new_port = int(message.data[1])
+        self.add_peer(new_host, new_port)
+        m = Message(1, 'PEERS', list(self.peers.keys()))
+        send_message(m, new_host, new_port)
+
+    def peers_handler(self, message):
+        """
+        Handles a PEERS message.
+
+        Add all the peers to the current peers list if enough room.
+        :param message: The received message.
+        :type message: Message
+        :rtype: None
+        """
+        for peer_id in message.data:
+            host, port = peer_id.split(':')
+            self.add_peer(host, port)
