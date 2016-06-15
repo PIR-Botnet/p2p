@@ -173,11 +173,11 @@ class PeerNode:
 
     def __run_stabilizer(self, stabilizer, delay):
         """
-        Runs the given function (stabilizer), waits for delay, then repeat until shutdown.
+        Runs the given function (stabilizer), waits for <delay> minutes, then repeat until shutdown.
 
         :param stabilizer: The function to run
         :type stabilizer: function
-        :param delay: Amount of time to wait between two calls of stabilizer
+        :param delay: Amount of time in minutes to wait between two calls of stabilizer
         :type delay: int
         :rtype: None
         """
@@ -188,11 +188,11 @@ class PeerNode:
     def start_stabilizer(self, stabilizer, delay):
         """
         Registers and starts a stabilizer function with this peer.
-        The function will be activated every <delay> seconds.
+        The function will be activated every <delay> minutes.
 
         :param stabilizer: The function to run
         :type stabilizer: function
-        :param delay: Amount of time in seconds to wait between two calls of stabilizer
+        :param delay: Amount of time in minutes to wait between two calls of stabilizer
         :type delay: int
         :rtype: None
         """
