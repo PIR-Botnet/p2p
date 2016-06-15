@@ -2,6 +2,8 @@ import socket
 import threading
 from typing import List
 
+import time
+
 from peer import PeerNode
 
 if __name__ == '__main__':
@@ -26,3 +28,20 @@ if __name__ == '__main__':
         t = threading.Thread(target=peer.mainloop)
         t.start()
 
+    print('CREATED ALL PEERS')
+
+    time.sleep(5)
+    print('STARTING ANOTHER PEER')
+    time.sleep(1)
+
+    port_number = 4591
+    peer = PeerNode(20, port_number)
+    print('Creating peer ', port_number)
+    peer.add_peer(ip, 4567)
+    peer.add_peer(ip, 4568)
+
+    t = threading.Thread(target=peer.mainloop)
+    t.start()
+    time.sleep(1)
+    print('\n\nPEERS :')
+    print(peer.peers)
