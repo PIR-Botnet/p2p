@@ -5,7 +5,9 @@ import traceback
 import time
 
 import math
-from typing import Dict, List, Union
+from datetime import datetime
+from typing import Dict, Union
+from typing import List
 
 import random
 from functions import make_server_socket, debug, send_message
@@ -55,7 +57,9 @@ class PeerNode:
 
         self.peer_lock = threading.Lock()
 
-        self.recently_received = []  # type: List[str]
+        self.recently_received = {}  # type: Dict[str, datetime]
+
+        self.recent_timeout = 300
 
     def __init_server_host(self) -> None:
         """
@@ -101,7 +105,8 @@ class PeerNode:
         hello_msg = Message(1, 'HELLO', [self.server_host, self.server_port])
         self.broadcast_message(hello_msg)
 
-        self.start_stabilizer(self.check_live_peers, random.randint(3, 10))
+        self.start_stabilizer(self.check_live_peers, random.randint(3, 10) * 60)
+        self.start_stabilizer(self.clear_old_messages, 45)
 
         while not self.shutdown:
             try:
@@ -136,7 +141,11 @@ class PeerNode:
 
         try:
             message = Message.from_string(message)
-            self.recently_received.append(message.id)
+
+            if message.id in self.recently_received:
+                return
+            self.recently_received[message.id] = datetime.now()
+
             if not message.is_valid():
                 raise MessageNotValidException
 
@@ -176,13 +185,13 @@ class PeerNode:
 
         :param stabilizer: The function to run
         :type stabilizer: function
-        :param delay: Amount of time in minutes to wait between two calls of stabilizer
+        :param delay: Amount of time in seconds to wait between two calls of stabilizer
         :type delay: int
         :rtype: None
         """
         while not self.shutdown:
             stabilizer()
-            time.sleep(delay * 60)
+            time.sleep(delay)
 
     def start_stabilizer(self, stabilizer, delay):
         """
@@ -191,7 +200,7 @@ class PeerNode:
 
         :param stabilizer: The function to run
         :type stabilizer: function
-        :param delay: Amount of time in minutes to wait between two calls of stabilizer
+        :param delay: Amount of time in seconds to wait between two calls of stabilizer
         :type delay: int
         :rtype: None
         """
@@ -350,3 +359,31 @@ class PeerNode:
         for peer_id in message.data:
             host, port = peer_id.split(':')
             self.add_peer(host, port)
+
+    def clear_old_messages(self):
+        """
+        Clears the old ids from recently seen messages.
+
+        See also __is_recent(self, received_time).
+        :rtype: None
+        """
+        to_delete = []  # type: List[str]
+        for msg_id, received_time in self.recently_received.items():
+            if not self.__is_recent(received_time):
+                to_delete.append(msg_id)
+
+        for msg_id in to_delete:
+            del self.recently_received[msg_id]
+
+    def __is_recent(self, received_time):
+        """
+        Tells if a time is recent according to the setting in constructor.
+
+        Recent means that the time delta between now and the received time
+        is less or equal to the `recent_timeout` in the constructor.
+        :param received_time: The time to tell if recent or not.
+        :type received_time: datetime
+        :return: True if the time is recent, false otherwise
+        :rtype: bool
+        """
+        return (datetime.now() - received_time).seconds <= self.recent_timeout
