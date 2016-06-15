@@ -166,9 +166,10 @@ class PeerNode:
         :type message: Message
         :rtype: None
         """
-        for peer_id in self.peers:
-            peer_id = peer_id.split(':')
-            send_message(message, peer_id[0], peer_id[1])
+        with self.peer_lock:
+            for peer_id in self.peers:
+                peer_id = peer_id.split(':')
+                send_message(message, peer_id[0], peer_id[1])
 
     def __run_stabilizer(self, stabilizer, delay):
         """
@@ -182,7 +183,7 @@ class PeerNode:
         """
         while not self.shutdown:
             stabilizer()
-            time.sleep(delay)
+            time.sleep(delay * 60)
 
     def start_stabilizer(self, stabilizer, delay):
         """
@@ -221,14 +222,17 @@ class PeerNode:
         :type port: int
         :rtype: None
         """
+        host = str(host)
+        port = int(port)
+        if host == self.server_host and port == self.server_port:
+            return
         if not self.max_peers_reached():
             self.__debug('Adding peer ' + str(port))
             peer_id = host + ':' + str(port)
-            self.peer_lock.acquire()
-            self.peers[peer_id] = {
-                'alive': True
-            }
-            self.peer_lock.release()
+            with self.peer_lock:
+                self.peers[peer_id] = {
+                    'alive': True
+                }
         else:
             self.__debug("Can't add new peer : max reached.")
 
@@ -243,9 +247,8 @@ class PeerNode:
         :rtype: None
         """
         peer_id = host + ':' + str(port)
-        self.peer_lock.acquire()
-        del self.peers[peer_id]
-        self.peer_lock.release()
+        with self.peer_lock:
+            del self.peers[peer_id]
 
     def number_of_peers(self):
         """
@@ -277,18 +280,15 @@ class PeerNode:
 
         to_delete = []
 
-        for peer_id, peer in self.peers.items():
-            if peer['alive']:
-                peer['alive'] = False
-            else:
-                to_delete.append(peer_id)
+        with self.peer_lock:
+            for peer_id, peer in self.peers.items():
+                if peer['alive']:
+                    peer['alive'] = False
+                else:
+                    to_delete.append(peer_id)
 
-        self.peer_lock.acquire()
-        try:
             for peer_id in to_delete:
                 del self.peers[peer_id]
-        finally:
-            self.peer_lock.release()
 
         m = Message(1, 'PING', [self.server_host, self.server_port])
         self.broadcast_message(m)
@@ -319,7 +319,8 @@ class PeerNode:
         alive_host = message.data[0]
         alive_port = message.data[1]
         peer_id = alive_host + ':' + alive_port
-        self.peers[peer_id]['alive'] = True
+        with self.peer_lock:
+            self.peers[peer_id]['alive'] = True
 
     def hello_handler(self, message):
         """
@@ -334,7 +335,8 @@ class PeerNode:
         new_host = message.data[0]
         new_port = int(message.data[1])
         self.add_peer(new_host, new_port)
-        m = Message(1, 'PEERS', list(self.peers.keys()))
+        with self.peer_lock:
+            m = Message(1, 'PEERS', list(self.peers.keys()))
         send_message(m, new_host, new_port)
 
     def peers_handler(self, message):
