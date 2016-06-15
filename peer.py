@@ -91,7 +91,6 @@ class PeerNode:
         :rtype: None
         """
         s = make_server_socket(self.server_port)  # type: socket.socket
-        # s.settimeout(2)
         self.__debug('Server started: {0} ({1}:{2})'.format(self.my_id, self.server_host, self.server_port))
 
         self.add_handler('PING', self.ping_handler)
@@ -99,8 +98,8 @@ class PeerNode:
         self.add_handler('HELLO', self.hello_handler)
         self.add_handler('PEERS', self.peers_handler)
 
-        hello = Message(1, 'HELLO', [self.server_host, self.server_port])
-        self.broadcast_message(hello)
+        hello_msg = Message(1, 'HELLO', [self.server_host, self.server_port])
+        self.broadcast_message(hello_msg)
 
         self.start_stabilizer(self.check_live_peers, random.randint(3, 10))
 
