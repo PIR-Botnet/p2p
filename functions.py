@@ -30,7 +30,7 @@ def debug(msg):
     :return: Nothing
     :rtype: None
     """
-    print("[%s] %s" % (str(threading.currentThread().getName()), msg))
+    print("[%s] %s" % (str(threading.currentThread().name), msg))
 
 
 def send_message(msg, host, port):

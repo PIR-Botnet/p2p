@@ -25,7 +25,8 @@ if __name__ == '__main__':
             if peer_port != port_number:
                 peer.add_peer(ip, peer_port)
 
-        t = threading.Thread(target=peer.mainloop)
+        name = ip + ':' + str(port_number)
+        t = threading.Thread(target=peer.mainloop, name=name)
         t.start()
 
     print('CREATED ALL PEERS')
@@ -40,7 +41,8 @@ if __name__ == '__main__':
     peer.add_peer(ip, 4567)
     peer.add_peer(ip, 4568)
 
-    t = threading.Thread(target=peer.mainloop)
+    name = ip + ':' + str(port_number)
+    t = threading.Thread(target=peer.mainloop, name=name)
     t.start()
     time.sleep(1)
     print('\n\nPEERS :')
