@@ -6,8 +6,7 @@ import time
 
 import math
 from datetime import datetime
-from typing import Dict, Union
-from typing import List
+from typing import Dict, Union, List
 
 import random
 from functions import make_server_socket, debug, send_message
