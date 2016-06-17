@@ -1,10 +1,8 @@
+import math
 import socket
 import threading
-import traceback
-
 import time
-
-import math
+import traceback
 from datetime import datetime
 from typing import Dict, Union, List
 
@@ -197,6 +195,7 @@ class PeerNode:
     def start_stabilizer(self, stabilizer, delay):
         """
         Registers and starts a stabilizer function with this peer.
+
         The function will be activated every <delay> minutes.
 
         :param stabilizer: The function to run
@@ -307,6 +306,7 @@ class PeerNode:
         Handles a PING message.
 
         Responds with an ALIVE message.
+
         :param message: The received message.
         :type message: Message
         :rtype: None
@@ -321,6 +321,7 @@ class PeerNode:
         Handles an ALIVE message.
 
         Switches the alive flag of the peer that sends the ALIVE message to True.
+
         :param message: The received message
         :type message: Message
         :rtype: None
@@ -337,6 +338,7 @@ class PeerNode:
 
         Adds the peer to the peer list if enough room.
         Sends it back our peer list.
+
         :param message: The received message.
         :type message: Message
         :rtype: None
@@ -353,6 +355,7 @@ class PeerNode:
         Handles a PEERS message.
 
         Add all the peers to the current peers list if enough room.
+
         :param message: The received message.
         :type message: Message
         :rtype: None
@@ -366,6 +369,7 @@ class PeerNode:
         Clears the old ids from recently seen messages.
 
         See also __is_recent(self, received_time).
+
         :rtype: None
         """
         to_delete = []  # type: List[str]
@@ -382,6 +386,7 @@ class PeerNode:
 
         Recent means that the time delta between now and the received time
         is less or equal to the `recent_timeout` in the constructor.
+
         :param received_time: The time to tell if recent or not.
         :type received_time: datetime
         :return: True if the time is recent, false otherwise
