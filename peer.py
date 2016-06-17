@@ -15,7 +15,7 @@ PERCENTAGE_OF_OLDEST_TO_REMOVE = 0.2
 
 
 class PeerNode:
-    def __init__(self, max_peers, server_port, server_host=None) -> None:
+    def __init__(self, max_peers, server_port, server_host=None):
         """
         Initialize the PeerNode
 
@@ -27,6 +27,7 @@ class PeerNode:
         :param server_host: The host address. If not supplied, will be
         determined by trying to connect to google.com.
         :type server_host: str
+        :rtype: None
         """
         self.debug = True
 
@@ -61,7 +62,7 @@ class PeerNode:
 
         self.recent_timeout = 300
 
-    def __init_server_host(self) -> None:
+    def __init_server_host(self):
         """
         Determines the local machine's IP address.
 
@@ -76,7 +77,7 @@ class PeerNode:
         self.server_host = s.getsockname()[0]
         s.close()
 
-    def __debug(self, msg) -> None:
+    def __debug(self, msg):
         """
         Prints a debug message if debug is enabled.
 
@@ -88,7 +89,7 @@ class PeerNode:
         if self.debug:
             debug(msg)
 
-    def mainloop(self) -> None:
+    def mainloop(self):
         """
         Initializes the server socket and listen for connections.
 
