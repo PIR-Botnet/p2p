@@ -1,8 +1,7 @@
 import socket
 import threading
-from typing import List
-
 import time
+from typing import List
 
 from peer import PeerNode
 
