@@ -2,7 +2,7 @@ import socket
 import threading
 
 
-def make_server_socket(port, backlog=5):
+def make_server_socket(port):
     """
     Creates a socket listening for TCP connections in IPv4.
 
@@ -10,8 +10,6 @@ def make_server_socket(port, backlog=5):
 
     :param port: The port to listen
     :type port: int
-    :param backlog: The number of connections to queue
-    :type backlog: int
     :return: The created socket
     :rtype: socket.socket
     """
