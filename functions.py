@@ -1,6 +1,8 @@
 import socket
 import threading
 
+from message import Message
+
 
 def make_server_socket(port):
     """
@@ -32,6 +34,17 @@ def debug(msg):
 
 
 def send_message(msg, host, port):
+    """
+    Sends a message to a host:port couple.
+
+    :param msg: The message to send.
+    :type msg: Message
+    :param host: The ip/host where to send the message.
+    :type host: str
+    :param port: The port where to send the message.
+    :type port: int
+    :rtype: None
+    """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     m = bytes(str(msg), 'utf-8')
     sock.sendto(m, (host, int(port)))
