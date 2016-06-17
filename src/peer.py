@@ -4,12 +4,13 @@ import threading
 import time
 import traceback
 from datetime import datetime
-from operator import itemgetter
 from typing import Dict, Union, List
 
-import random
-from functions import make_server_socket, debug, send_message
 from message import Message, MessageNotValidException
+
+import random
+from operator import itemgetter
+from functions import make_server_socket, debug, send_message
 
 PERCENTAGE_OF_OLDEST_TO_REMOVE = 0.2
 
