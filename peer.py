@@ -132,7 +132,9 @@ class PeerNode:
         :param message: The received message
         :type message: str
         :param host: The address from which the message was received
+        :type host: str
         :param port: The linked port
+        :type port: int
         :type sock: socket.socket
         :rtype: None
         """
