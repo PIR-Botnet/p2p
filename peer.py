@@ -4,11 +4,14 @@ import threading
 import time
 import traceback
 from datetime import datetime
+from operator import itemgetter
 from typing import Dict, Union, List
 
 import random
 from functions import make_server_socket, debug, send_message
 from message import Message, MessageNotValidException
+
+PERCENTAGE_OF_OLDEST_TO_REMOVE = 0.2
 
 
 class PeerNode:
@@ -44,7 +47,7 @@ class PeerNode:
         self.my_id = '{0}:{1}'.format(self.server_host, self.server_port)
 
         # list of known peers
-        self.peers = {}  # type: Dict[str, Dict[str, Union[bool, str, int]]]
+        self.peers = {}  # type: Dict[str, Dict[str, Union[bool, str, int, datetime]]]
 
         # used to stop the main loop
         self.shutdown = False
@@ -176,7 +179,7 @@ class PeerNode:
         with self.peer_lock:
             for peer_id in self.peers:
                 peer_id = peer_id.split(':')
-                send_message(message, peer_id[0], peer_id[1])
+                send_message(message, peer_id[0], int(peer_id[1]))
 
     def __run_stabilizer(self, stabilizer, delay):
         """
@@ -239,7 +242,10 @@ class PeerNode:
             peer_id = host + ':' + str(port)
             with self.peer_lock:
                 self.peers[peer_id] = {
-                    'alive': True
+                    'alive': True,
+                    'time_added': datetime.now(),
+                    'host': host,
+                    'port': port
                 }
         else:
             self.__debug("Can't add new peer : max reached.")
@@ -286,20 +292,33 @@ class PeerNode:
         :rtype: None
         """
 
-        to_delete = []
+        to_delete = set()
 
         with self.peer_lock:
             for peer_id, peer in self.peers.items():
                 if peer['alive']:
                     peer['alive'] = False
                 else:
-                    to_delete.append(peer_id)
+                    to_delete.add(peer_id)
+
+            if len(self.peers) > 0.8 * self.max_peers:
+                sorted_peers = self.get_sorted_peers()
+                if sorted_peers is not None:
+                    for i in range(int(PERCENTAGE_OF_OLDEST_TO_REMOVE * len(self.peers))):
+                        peer = sorted_peers[i]
+                        peer_id = peer['host'] + ':' + str(peer['port'])
+                        to_delete.add(peer_id)
 
             for peer_id in to_delete:
                 del self.peers[peer_id]
 
         m = Message(1, 'PING', [self.server_host, self.server_port])
         self.broadcast_message(m)
+
+    def get_sorted_peers(self):
+        with self.peer_lock:
+            sorted_peers = sorted(self.peers.values(), key=itemgetter('time_added'))
+        return sorted_peers
 
     def ping_handler(self, message):
         """
@@ -345,6 +364,13 @@ class PeerNode:
         """
         new_host = message.data[0]
         new_port = int(message.data[1])
+
+        if self.max_peers_reached():
+            sorted_peers = self.get_sorted_peers()
+            if sorted_peers is not None:
+                first_peer = sorted_peers[0]
+                self.remove_peer(first_peer['host'], first_peer['port'])
+
         self.add_peer(new_host, new_port)
         with self.peer_lock:
             m = Message(1, 'PEERS', list(self.peers.keys()))
