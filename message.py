@@ -60,10 +60,26 @@ class Message:
         return cls(ttl, order.upper(), data, msg_id=uid)
 
     def is_valid(self):
+        """
+        Tells if the message is valid.
+
+        A message is valid if it has a not empty order.
+
+        :return: True if the message is valid, False otherwise.
+        :rtype: bool
+        """
         return self.order is not None and self.order != ''
 
     def is_expired(self):
-        return self.ttl > 0
+        """
+        Tells if the message is expired.
+
+        A message is expired when its ttl is less than or equal to 0.
+
+        :return: True if the message is expired, False otherwise.
+        :rtype: bool
+        """
+        return self.ttl <= 0
 
 
 class MessageNotValidException(Exception):
