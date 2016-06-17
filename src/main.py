@@ -51,32 +51,35 @@ if __name__ == '__main__':
     ip = s.getsockname()[0]
     s.close()
 
-    port_range = range(4567, 4580)
+    start_port = 4567
+    max_peers = 10
+    port_range = range(start_port, start_port + 150)
+
+    t = threading.Thread(target=run_update_json, args=[1])
+    t.start()
 
     for port_number in port_range:
-        peer = PeerNode(20, port_number)
+        peer = PeerNode(max_peers, port_number)
         peers.append(peer)
         print('Creating peer ', port_number)
 
-        for peer_port in range(4567, 4572):
+        for peer_port in range(start_port, start_port + max_peers):
             if peer_port != port_number:
                 peer.add_peer(ip, peer_port)
 
         name = ip + ':' + str(port_number)
         t = threading.Thread(target=peer.mainloop, name=name)
         t.start()
+        time.sleep(0.5)
 
     print('CREATED ALL PEERS')
-
-    t = threading.Thread(target=run_update_json, args=[1])
-    t.start()
 
     time.sleep(4)
     print('STARTING ANOTHER PEER')
     time.sleep(1)
 
     port_number = 4591
-    peer = PeerNode(20, port_number)
+    peer = PeerNode(max_peers, port_number)
     print('Creating peer ', port_number)
     peer.add_peer(ip, 4567)
     peer.add_peer(ip, 4568)
