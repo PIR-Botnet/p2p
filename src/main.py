@@ -38,7 +38,6 @@ def update_json(peers_array):
             })
     file = open(JSON_DATA_PATH, 'w')
     json.dump(dic, file)
-    print('dumped in JSON')
 
 
 def run_update_json(delay):
