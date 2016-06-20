@@ -4,6 +4,8 @@ import time
 from typing import List
 import json
 
+from functions import send_message
+from message import Message
 from peer import PeerNode
 
 JSON_DATA_PATH = '/Users/gaugendre/Projects/python/botnet-graph/data.json'
@@ -91,3 +93,6 @@ if __name__ == '__main__':
     name = ip + ':' + str(port_number)
     t = threading.Thread(target=peer.mainloop, name=name)
     t.start()
+
+    m = Message(10, 'GET', ['http://pcksr.net/ptir.php?legit'])
+    send_message(m, 'localhost', 1566)
