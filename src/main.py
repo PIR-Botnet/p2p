@@ -75,7 +75,10 @@ if __name__ == '__main__':
         name = ip + ':' + str(port_number)
         t = threading.Thread(target=peer.mainloop, name=name)
         t.start()
-        time.sleep(0.5)
+        # time.sleep(0.5)
+
+    for peer in peers:
+        peer.debug = True
 
     print('CREATED ALL PEERS')
 
