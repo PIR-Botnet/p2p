@@ -6,7 +6,7 @@ import json
 
 from peer import PeerNode
 
-JSON_DATA_PATH = '/home/gaugendre/Projects/python/graph-botnet/data.json'
+JSON_DATA_PATH = '/Users/gaugendre/Projects/python/botnet-graph/data.json'
 
 peers = []  # type: List[PeerNode]
 
@@ -36,8 +36,10 @@ def update_json(peers_array):
                 "from": peer.my_id,
                 "to": neighbour_id
             })
+
     file = open(JSON_DATA_PATH, 'w')
-    json.dump(dic, file)
+    with file:
+        json.dump(dic, file, indent=2)
 
 
 def run_update_json(delay):
@@ -53,13 +55,14 @@ if __name__ == '__main__':
 
     start_port = 4567
     max_peers = 10
-    port_range = range(start_port, start_port + 150)
+    port_range = range(start_port, start_port + 100)
 
     t = threading.Thread(target=run_update_json, args=[1])
     t.start()
 
     for port_number in port_range:
         peer = PeerNode(max_peers, port_number)
+        peer.debug = False
         peers.append(peer)
         print('Creating peer ', port_number)
 
@@ -78,7 +81,7 @@ if __name__ == '__main__':
     print('STARTING ANOTHER PEER')
     time.sleep(1)
 
-    port_number = 4591
+    port_number = 1566
     peer = PeerNode(max_peers, port_number)
     print('Creating peer ', port_number)
     peer.add_peer(ip, 4567)

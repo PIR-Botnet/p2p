@@ -6,11 +6,11 @@ import traceback
 from datetime import datetime
 from typing import Dict, Union, List
 
+from functions import make_server_socket, debug, send_message
 from message import Message, MessageNotValidException
 
 import random
 from operator import itemgetter
-from functions import make_server_socket, debug, send_message
 
 PERCENTAGE_OF_OLDEST_TO_REMOVE = 0.2
 
@@ -57,7 +57,7 @@ class PeerNode:
         self.handlers = {}
         self.router = None
 
-        self.peer_lock = threading.Lock()
+        self.peer_lock = threading.RLock()
 
         self.recently_received = {}  # type: Dict[str, datetime]
 
@@ -107,7 +107,7 @@ class PeerNode:
         hello_msg = Message(1, 'HELLO', [self.server_host, self.server_port])
         self.broadcast_message(hello_msg)
 
-        self.start_stabilizer(self.check_live_peers, random.randint(3, 10) * 60)
+        self.start_stabilizer(self.check_live_peers, random.randint(3, 10) * 2)
         self.start_stabilizer(self.clear_old_messages, 45)
 
         while not self.shutdown:
@@ -141,8 +141,6 @@ class PeerNode:
         :type sock: socket.socket
         :rtype: None
         """
-        self.__debug('New child ' + str(threading.currentThread().getName()))
-
         try:
             message = Message.from_string(message)
 

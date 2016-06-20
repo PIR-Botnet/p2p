@@ -1,8 +1,6 @@
 import socket
 import threading
 
-from message import Message
-
 
 def make_server_socket(port):
     """
