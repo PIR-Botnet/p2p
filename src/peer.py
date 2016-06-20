@@ -395,6 +395,7 @@ class PeerNode:
             self.add_peer(host, port)
 
         if not self.__recently_received_order('PEERS'):
+            time.sleep(random.randint(1, 10))
             self.send_hello()
 
     def get_handler(self, message):
