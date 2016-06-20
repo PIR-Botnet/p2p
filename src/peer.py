@@ -107,7 +107,7 @@ class PeerNode:
 
         self.send_hello()
 
-        self.start_stabilizer(self.check_live_peers, random.randint(3, 10) * 2)
+        self.start_stabilizer(self.check_live_peers, random.randint(3, 10) * 60)
         self.start_stabilizer(self.clear_old_messages, 45)
 
         while not self.shutdown:
