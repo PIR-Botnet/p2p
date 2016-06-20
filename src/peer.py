@@ -398,6 +398,16 @@ class PeerNode:
             self.send_hello()
 
     def get_handler(self, message):
+        """
+        Handles a GET message.
+
+        Do a GET to the url given in message data.
+
+        :param message: The received message. Should contain a valid URL as first data.
+        :type message: Message
+        :rtype: None
+        """
+        time.sleep(random.randrange(2, 37, 2))
         requests.get(message.data[0])
 
     def clear_old_messages(self):
