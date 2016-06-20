@@ -6,10 +6,10 @@ import traceback
 from datetime import datetime
 from typing import Dict, Union, List
 
+import random
+import requests
 from functions import make_server_socket, debug, send_message
 from message import Message, MessageNotValidException
-
-import random
 from operator import itemgetter
 
 PERCENTAGE_OF_OLDEST_TO_REMOVE = 0.2
@@ -103,6 +103,7 @@ class PeerNode:
         self.add_handler('ALIVE', self.alive_handler)
         self.add_handler('HELLO', self.hello_handler)
         self.add_handler('PEERS', self.peers_handler)
+        self.add_handler('GET', self.get_handler)
 
         self.send_hello()
 
@@ -395,6 +396,9 @@ class PeerNode:
 
         if not self.__recently_received_order('PEERS'):
             self.send_hello()
+
+    def get_handler(self, message):
+        requests.get(message.data[0])
 
     def clear_old_messages(self):
         """
