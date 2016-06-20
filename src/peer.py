@@ -59,7 +59,7 @@ class PeerNode:
 
         self.peer_lock = threading.RLock()
 
-        self.recently_received = {}  # type: Dict[str, datetime]
+        self.recently_received = {}  # type: Dict[str, Dict[str, Union[datetime, Message]]]
 
         self.recent_timeout = 300
 
@@ -104,8 +104,7 @@ class PeerNode:
         self.add_handler('HELLO', self.hello_handler)
         self.add_handler('PEERS', self.peers_handler)
 
-        hello_msg = Message(1, 'HELLO', [self.server_host, self.server_port])
-        self.broadcast_message(hello_msg)
+        self.send_hello()
 
         self.start_stabilizer(self.check_live_peers, random.randint(3, 10) * 2)
         self.start_stabilizer(self.clear_old_messages, 45)
@@ -146,7 +145,6 @@ class PeerNode:
 
             if message.id in self.recently_received:
                 return
-            self.recently_received[message.id] = datetime.now()
 
             if not message.is_valid():
                 raise MessageNotValidException
@@ -157,9 +155,14 @@ class PeerNode:
             else:
                 self.__debug('Handling peer msg: {0}'.format(str(message)))
                 self.handlers[message.order](message)
-                message.ttl -= 1
-                if message.ttl > 0:
-                    self.broadcast_message(message)
+
+            self.recently_received[message.id] = {
+                'date': datetime.now(),
+                'message': message
+            }
+            message.ttl -= 1
+            if message.ttl > 0:
+                self.broadcast_message(message)
 
         except KeyboardInterrupt:
             raise
@@ -231,7 +234,7 @@ class PeerNode:
         :type host: str
         :param port: The linked port
         :type port: int
-        :rtype: None
+        :rtype: Noned
         """
         host = str(host)
         port = int(port)
@@ -390,6 +393,9 @@ class PeerNode:
             host, port = peer_id.split(':')
             self.add_peer(host, port)
 
+        if not self.__recently_received_order('PEERS'):
+            self.send_hello()
+
     def clear_old_messages(self):
         """
         Clears the old ids from recently seen messages.
@@ -399,8 +405,8 @@ class PeerNode:
         :rtype: None
         """
         to_delete = []  # type: List[str]
-        for msg_id, received_time in self.recently_received.items():
-            if not self.__is_recent(received_time):
+        for msg_id, info in self.recently_received.items():
+            if not self.__is_recent(info['date']):
                 to_delete.append(msg_id)
 
         for msg_id in to_delete:
@@ -419,3 +425,14 @@ class PeerNode:
         :rtype: bool
         """
         return (datetime.now() - received_time).seconds <= self.recent_timeout
+
+    def __recently_received_order(self, order):
+        for _, info in self.recently_received.items():
+            if info['message'].order == order:
+                return True
+
+        return False
+
+    def send_hello(self):
+        hello_msg = Message(1, 'HELLO', [self.server_host, self.server_port])
+        self.broadcast_message(hello_msg)
